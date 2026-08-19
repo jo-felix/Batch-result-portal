@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Batch Result Portal</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+.result-box {
+    width: 90%;
+    max-width: 600px;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+}
+
+.student-info {
+    margin-bottom: 25px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 25px;
+}
+
+th,
+td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background: #f2f4f7;
+}
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f2f4f7;
+
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-box {
+            width: 90%;
+            max-width: 400px;
+            background: white;
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 6px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+/* Mobile layout */
+@media (max-width: 600px) {
+
+    body {
+        align-items: flex-start;
+        padding: 20px 10px;
+    }
+
+    .login-box,
+    .result-box {
+        width: 100%;
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+
+    h3 {
+        font-size: 18px;
+    }
+
+    input,
+    button {
+        font-size: 16px;
+    }
+
+    th,
+    td {
+        padding: 10px 8px;
+        font-size: 14px;
+    }
+}
+.portal-title {
+    margin-bottom: 5px;
+}
+
+.portal-subtitle {
+    text-align: center;
+    color: #666;
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 14px;
+}
+.student-card {
+    background: #f7f8fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+}
+.admin-box {
+    max-width: 700px;
+}
+
+.admin-label {
+    text-align: center;
+    color: #2563eb;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    margin-top: -5px;
+    margin-bottom: 25px;
+}
+.upload-card {
+    background: linear-gradient(135deg, #eff6ff, #f8fafc);
+    border: 1px solid #bfdbfe;
+    padding: 24px;
+    border-radius: 14px;
+    margin: 20px 0;
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.08);
+}
+
+.upload-card h3 {
+    color: #1e40af;
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.upload-card p {
+    color: #64748b;
+}
+.upload-card button {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    box-shadow: 0 3px 8px rgba(37, 99, 235, 0.25);
+    transition: 0.2s;
+}
+
+.upload-card button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 12px rgba(37, 99, 235, 0.3);
+}
+    </style>
+</head>
+
+<body>
+
+   <div class="login-box" id="loginSection">
+
+        <h1>Batch Result Portal</h1>
+
+        <p class="subtitle">
+            Student Result System
+        </p>
+
+        <label for="studentId">
+            Student ID
+        </label>
+
+        <input
+            type="text"
+            id="studentId"
+            placeholder="Enter your student ID"
+        >
+
+        <label for="password">
+            Password
+        </label>
+
+        <input
+            type="password"
+            id="password"
+            placeholder="Enter your password"
+        >
+
+       <button id="loginButton">
+    Login
+</button>
+
+    </div><div id="resultSection" style="display: none;">
+
+    <div class="result-box">
+
+        <h1 class="portal-title">Student Result</h1>
+<p class="portal-subtitle">Batch Result Portal</p>
+
+        <div class="student-info student-card">
+
+            <p>
+                <strong>Name:</strong>
+                <span id="studentName"></span>
+            </p>
+
+            <p>
+                <strong>Student ID:</strong>
+                <span id="displayStudentId"></span>
+            </p>
+
+        </div>
+<div class="table-container">
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Course</th>
+                    <th>Result</th>
+                </tr>
+            </thead>
+
+            <tbody id="resultsTable">
+            </tbody>
+
+        </table>
+</div>
+        <button id="logoutButton">
+            Logout
+        </button>
+
+    </div>
+
+</div>
+<div id="adminSection" style="display: none;">
+
+    <div class="result-box admin-box">
+
+        <h1>Admin Dashboard</h1>
+<p class="admin-label">RESULT MANAGEMENT</p>
+<p>Manage and publish student results.</p>
+
+        <hr>
+
+        <h2>Result Management</h2>
+<div class="upload-card">
+<h3>Upload Result File</h3>
+
+<p>
+    Upload the instructor's CSV result file for validation and publishing.
+</p>
+
+<input
+    type="file"
+    id="csvFile"
+    accept=".csv"
+>
+
+<button id="previewButton">
+</div>
+    Preview Results
+</button>
+
+<div id="previewSection" style="display: none; margin-top: 25px;">
+<div id="validationSummary">
+    <h2>Upload Check</h2>
+
+    <p>
+        Valid records:
+        <strong id="validCount">0</strong>
+    </p>
+
+    <p>
+        Errors:
+        <strong id="errorCount">0</strong>
+    </p>
+
+    <p id="validationStatus"></p>
+</div>
+
+    <h2>Preview</h2>
+
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Student ID</th>
+                    <th>Course</th>
+                    <th>Result</th>
+                </tr>
+            </thead>
+
+            <tbody id="previewTable">
+            </tbody>
+        </table>
+    </div>
+
+    <button id="publishButton">
+        Publish Results
+    </button>
+
+</div>
+            Result uploading will be added here.
+        </p>
+
+        <button id="adminLogoutButton">
+            Logout
+        </button>
+
+    </div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="script.js"></script>
+
+</body>
+</html>

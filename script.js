@@ -25,7 +25,11 @@ loginButton.addEventListener("click", async function () {
         return;
     }
 
-    const email = studentId.toLowerCase() + "@example.com";
+   const email =
+    studentId
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "_") +
+    "@students.local";
 
     const { data, error } =
         await supabaseClient.auth.signInWithPassword({

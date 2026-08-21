@@ -219,245 +219,397 @@ adminLogoutButton.addEventListener("click", async function () {
     console.log("Admin logged out successfully.");
 
 });
-// =========================
-// CSV PREVIEW + VALIDATION
-// =========================
+// =====
+// RESULT FILE PREVIEW + VALIDATION
+// =====
 
-const csvFile = document.getElementById("csvFile");
-
+const resultFile = document.getElementById("resultFile");
 const previewButton = document.getElementById("previewButton");
-
 const previewSection = document.getElementById("previewSection");
-
 const previewTable = document.getElementById("previewTable");
-
 
 previewButton.addEventListener("click", async function () {
 
-    if (!csvFile.files.length) {
+    if (!resultFile.files.length) {
+        alert("Please choose a result file first.");
+        return;
+    }
 
-        alert("Please choose a CSV file first.");
+    const file = resultFile.files[0];
+
+    // =========================
+// READ FILE
+// =========================
+
+let lines = [];
+
+const fileName = file.name.toLowerCase();
+
+
+// =========================
+// EXCEL
+// =========================
+
+if (fileName.endsWith(".xlsx")) {
+
+    try {
+
+        const arrayBuffer = await file.arrayBuffer();
+
+        const workbook = XLSX.read(
+            arrayBuffer,
+            { type: "array" }
+        );
+
+        const firstSheet =
+            workbook.Sheets[workbook.SheetNames[0]];
+
+        const rows =
+            XLSX.utils.sheet_to_json(
+                firstSheet,
+                { header: 1 }
+            );
+
+        lines = rows.map(function (row) {
+            return row.join(",");
+        });
+
+    } catch (error) {
+
+        console.error(error);
+        alert("Could not read the Excel file.");
+        return;
+    }
+
+}
+
+
+// =========================
+// WORD
+// =========================
+
+else if (fileName.endsWith(".docx")) {
+
+    try {
+
+        const arrayBuffer = await file.arrayBuffer();
+
+        const result =
+            await mammoth.convertToHtml({
+                arrayBuffer: arrayBuffer
+            });
+
+        const parser = new DOMParser();
+
+        const document =
+            parser.parseFromString(
+                result.value,
+                "text/html"
+            );
+
+        const table =
+            document.querySelector("table");
+
+        if (!table) {
+
+            alert(
+                "No table was found in the Word document."
+            );
+
+            return;
+        }
+
+        const rows =
+            Array.from(
+                table.querySelectorAll("tr")
+            );
+
+        lines = rows.map(function (row) {
+
+            const cells =
+                Array.from(
+                    row.querySelectorAll("th, td")
+                );
+
+            return cells.map(function (cell) {
+                return cell.textContent.trim();
+            }).join(",");
+
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            "Could not read the Word document."
+        );
+
+        return;
+    }
+
+}
+
+
+// =========================
+// CSV
+// =========================
+
+else {
+
+    try {
+
+        const text = await file.text();
+
+        lines = text
+            .trim()
+            .split(/\r?\n/);
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert("Could not read the CSV file.");
+        return;
+    }
+
+}
+
+
+    // =========================
+    // CHECK EMPTY FILE
+    // =========================
+
+    if (lines.length < 2) {
+
+        alert("The result file appears to be empty.");
+        return;
+    }
+
+
+    previewTable.innerHTML = "";
+
+    const validRows = [];
+    const errors = [];
+
+
+    // =========================
+    // VALIDATE EACH ROW
+    // =========================
+
+    for (let i = 1; i < lines.length; i++) {
+
+        const columns = lines[i].split(",");
+
+        if (columns.length < 3) {
+
+            errors.push(
+                "Row " + (i + 1) +
+                " — Invalid CSV/Excel format."
+            );
+
+            continue;
+        }
+
+
+        const studentId = columns[0].trim();
+        const course = columns[1].trim();
+        const grade = columns.slice(2).join(",").trim();
+
+
+        // =========================
+        // CHECK EMPTY FIELDS
+        // =========================
+
+        if (!studentId || !course || !grade) {
+
+            errors.push(
+                "Row " + (i + 1) +
+                " — Missing student ID, course, or result."
+            );
+
+            continue;
+        }
+
+
+        // =========================
+        // CHECK RESULT
+        // =========================
+
+        const resultValue = grade.trim();
+
+        const validResult =
+            /^[0-9]+(\.[0-9]+)?$/.test(resultValue) ||
+            /^[A-Za-z][A-Za-z0-9+\- ]*$/.test(resultValue);
+
+        if (!validResult) {
+
+            errors.push(
+                "Row " + (i + 1) +
+                " — Invalid result: " +
+                resultValue
+            );
+
+            continue;
+        }
+
+
+        // =========================
+        // CHECK STUDENT EXISTS
+        // =========================
+
+        const {
+            data: student,
+            error
+        } = await supabaseClient
+            .from("students")
+            .select("student_id")
+            .eq("student_id", studentId)
+            .single();
+
+
+        if (error || !student) {
+
+            errors.push(
+                "Row " + (i + 1) +
+                " — Student ID " +
+                studentId +
+                " does not exist."
+            );
+
+            continue;
+        }
+
+
+        // =========================
+        // CHECK DUPLICATE
+        // =========================
+const duplicate = validRows.some(function (existing) {
+
+            return (
+                existing.student_id === studentId &&
+                existing.course === course
+            );
+
+        });
+
+
+        if (duplicate) {
+
+            errors.push(
+                "Row " + (i + 1) +
+                " — Duplicate result: " +
+                studentId +
+                " - " +
+                course
+            );
+
+            continue;
+        }
+
+
+        // =========================
+        // SAVE VALID ROW
+        // =========================
+
+        validRows.push({
+            student_id: studentId,
+            course: course,
+            result: grade
+        });
+
+
+        // =========================
+        // CREATE PREVIEW ROW
+        // =========================
+
+        const row = document.createElement("tr");
+
+        const studentCell =
+            document.createElement("td");
+
+        studentCell.textContent = studentId;
+
+
+        const courseCell =
+            document.createElement("td");
+
+        courseCell.textContent = course;
+
+
+        const gradeCell =
+            document.createElement("td");
+
+        gradeCell.textContent = grade;
+
+
+        row.appendChild(studentCell);
+        row.appendChild(courseCell);
+        row.appendChild(gradeCell);
+
+        previewTable.appendChild(row);
+    }
+
+
+    // =========================
+    // SAVE VALIDATED RESULTS
+    // =========================
+
+    window.validatedResults = validRows;
+
+
+    // =========================
+    // UPDATE VALIDATION SUMMARY
+    // =========================
+
+    document.getElementById("validCount").textContent =
+        validRows.length;
+
+    document.getElementById("errorCount").textContent =
+        errors.length;
+
+    document.getElementById("validationStatus").textContent =
+        errors.length === 0
+            ? "✓ Ready to publish"
+            : "✗ Fix the errors before publishing";
+
+
+    previewSection.style.display = "block";
+
+
+    // =========================
+    // SHOW ERRORS
+    // =========================
+
+    if (errors.length > 0) {
+
+        alert(
+            "Upload check failed.\n\n" +
+            "Valid records: " +
+            validRows.length +
+            "\nErrors: " +
+            errors.length +
+            "\n\n" +
+            errors.join("\n")
+        );
 
         return;
     }
 
 
-    const file = csvFile.files[0];
+    // =========================
+    // ALL GOOD
+    // =========================
 
-    const reader = new FileReader();
-
-
-    reader.onload = async function (event) {
-
-        const text = event.target.result;
-
-        const lines = text.trim().split(/\r?\n/);
-
-
-        if (lines.length < 2) {
-
-            alert("The CSV file appears to be empty.");
-
-            return;
-        }
-
-
-        previewTable.innerHTML = "";
-
-
-        const validRows = [];
-
-const errors = [];
-        // Skip header
-
-        for (let i = 1; i < lines.length; i++) {
-
-            const columns = lines[i].split(",");
-
-
-            if (columns.length < 3) {
-
-    errors.push(
-        "Row " + (i + 1) +
-        " — Invalid CSV format."
+    console.log(
+        "Results validated successfully:",
+        validRows
     );
-
-    continue;
-}
-
-
-            const studentId = columns[0].trim();
-
-            const course = columns[1].trim();
-
-            const grade = columns[2].trim();
-
-
-           // Check empty fields
-
-if (!studentId || !course || !grade) {
-
-     errors.push(
-        "Row " + (i + 1) +
-        " — Missing student ID, course, or result."
-    );
-
-    continue;
-}
-// Check whether result looks valid
-
-const resultValue = grade.trim();
-
-const validResult =
-    /^[0-9]+(\.[0-9]+)?$/.test(resultValue) ||
-    /^[A-Za-z][A-Za-z0-9+\- ]*$/.test(resultValue);
-
-if (!validResult) {
-
-    errors.push(
-        "Row " + (i + 1) +
-        " — Invalid result: " +
-        resultValue
-    );
-
-    continue;
-}
-
-            // Check whether student exists
-
-            const { data: student, error } =
-                await supabaseClient
-                    .from("students")
-                    .select("student_id")
-                    .eq("student_id", studentId)
-                    .single();
-
-
-            if (error || !student) {
-
-    errors.push(
-        "Row " + (i + 1) +
-        " — Student ID " +
-        studentId +
-        " does not exist."
-    );
-
-    continue;
-}
-
-// Check for duplicate student + course
-
-const duplicate = validRows.some(function (existing) {
-
-    return (
-        existing.student_id === studentId &&
-        existing.course === course
-    );
-
-});
-
-if (duplicate) {
-
-    errors.push(
-        "Row " + (i + 1) +
-        " — Duplicate result: " +
-        studentId +
-        " - " +
-        course
-    );
-
-    continue;
-}
-            validRows.push({
-                student_id: studentId,
-                course: course,
-                result: grade
-            });
-
-
-            // Create preview row
-
-            const row =
-                document.createElement("tr");
-
-
-            const studentCell =
-                document.createElement("td");
-
-            studentCell.textContent = studentId;
-
-
-            const courseCell =
-                document.createElement("td");
-
-            courseCell.textContent = course;
-
-
-            const gradeCell =
-                document.createElement("td");
-
-            gradeCell.textContent = grade;
-
-
-            row.appendChild(studentCell);
-
-            row.appendChild(courseCell);
-
-            row.appendChild(gradeCell);
-
-
-            previewTable.appendChild(row);
-
-        }
-
-
-        // Save validated rows for next step
-
-        window.validatedResults = validRows;
-document.getElementById("validCount").textContent =
-    validRows.length;
-
-document.getElementById("errorCount").textContent =
-    errors.length;
-
-document.getElementById("validationStatus").textContent =
-    errors.length === 0
-        ? "✓ Ready to publish"
-        : "✗ Fix the errors before publishing";
-if (errors.length > 0) {
-
-   previewSection.style.display = "block";
 
     alert(
-        "Upload check failed.\n\n" +
-        "Valid records: " +
         validRows.length +
-        "\nErrors: " +
-        errors.length +
-        "\n\n" +
-        errors.join("\n")
+        " result records are valid and ready to publish."
     );
-
-    return;
-}
-        previewSection.style.display = "block";
-
-
-        console.log(
-            "CSV validated successfully:",
-            validRows
-        );
-
-
-        alert(
-            validRows.length +
-            " result records are valid and ready to publish."
-        );
-
-    };
-
-
-    reader.readAsText(file);
 
 });
 // =========================
@@ -707,6 +859,5 @@ async function restoreSession() {
         resultsTable.appendChild(row);
     });
 }
-
 // Run session restoration
 restoreSession();

@@ -236,7 +236,8 @@ th {
     Login
 </button>
 
-    </div><div id="resultSection" style="display: none;">
+    </div>
+<div id="resultSection" style="display: none;">
 
     <div class="result-box">
 
@@ -278,76 +279,114 @@ th {
     </div>
 
 </div>
+
 <div id="adminSection" style="display: none;">
 
     <div class="result-box admin-box">
 
         <h1>Admin Dashboard</h1>
-<p class="admin-label">RESULT MANAGEMENT</p>
-<p>Manage and publish student results.</p>
+
+        <p class="admin-label">RESULT MANAGEMENT</p>
+
+        <p>
+            Manage and publish student results.
+        </p>
 
         <hr>
 
-        <h2>Result Management</h2>
-<div class="upload-card">
-<h3>Upload Result File</h3>
+        <h2>Import Results</h2>
 
-<p>
-    Upload the instructor's CSV result file for validation and publishing.
-</p>
+        <div class="upload-card">
 
-<input
-    type="file"
-    id="csvFile"
-    accept=".csv"
->
+            <h3>Upload Result File</h3>
 
-<button id="previewButton">
-</div>
-    Preview Results
-</button>
+            <p>
+                Upload the instructor's result file.
+            </p>
 
-<div id="previewSection" style="display: none; margin-top: 25px;">
-<div id="validationSummary">
-    <h2>Upload Check</h2>
+            <label for="resultFile">
+                Choose result file
+            </label>
 
-    <p>
-        Valid records:
-        <strong id="validCount">0</strong>
-    </p>
+            <input
+                type="file"
+                id="resultFile"
+                accept=".csv,.xlsx,.docx"
+            >
 
-    <p>
-        Errors:
-        <strong id="errorCount">0</strong>
-    </p>
+            <p>
+                Supported formats: CSV, Excel, Word
+            </p>
 
-    <p id="validationStatus"></p>
-</div>
+            <button id="previewButton">
+                Preview Results
+            </button>
 
-    <h2>Preview</h2>
+            <p id="importStatus">
+                No file selected.
+            </p>
 
-    <div style="overflow-x: auto;">
-        <table>
-            <thead>
-                <tr>
-                    <th>Student ID</th>
-                    <th>Course</th>
-                    <th>Result</th>
-                </tr>
-            </thead>
+        </div>
 
-            <tbody id="previewTable">
-            </tbody>
-        </table>
-    </div>
 
-    <button id="publishButton">
-        Publish Results
-    </button>
+        <!-- RESULTS PREVIEW -->
 
-</div>
-            Result uploading will be added here.
-        </p>
+        <div
+            id="previewSection"
+            style="display: none; margin-top: 25px;"
+        >
+
+            <div id="validationSummary">
+
+                <h2>Upload Check</h2>
+
+                <p>
+                    Valid records:
+                    <strong id="validCount">0</strong>
+                </p>
+
+                <p>
+                    Errors:
+                    <strong id="errorCount">0</strong>
+                </p>
+
+                <p id="validationStatus"></p>
+
+            </div>
+
+
+            <h2>Preview</h2>
+
+            <div style="overflow-x: auto;">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Course</th>
+                            <th>Result</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="previewTable">
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <button id="publishButton">
+                Publish Results
+            </button>
+
+        </div>
+
+
+        <!-- ADMIN LOGOUT -->
 
         <button id="adminLogoutButton">
             Logout
@@ -356,9 +395,13 @@ th {
     </div>
 
 </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<script src="script.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/mammoth/mammoth.browser.min.js"></script>
+
+<script src="script.js"></script>
 </body>
 </html>
